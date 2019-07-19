@@ -9,7 +9,6 @@ void main() async {
   runApp(MaterialApp(
     title: "Conversor de Moedas",
     home: Home(),
-    theme: ThemeData(hintColor: Colors.yellow, primaryColor: Colors.white),
   ));
 }
 
@@ -24,6 +23,11 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  final realControl = TextEditingController();
+  final dolarControl = TextEditingController();
+  final euroControl = TextEditingController();
+  double dolar, euro;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,14 +59,56 @@ class _HomeState extends State<Home> {
                     style: TextStyle(color: Colors.white, fontSize: 20),
                   ));
                 } else {
-                  return App(Dolar,Euro,Real);
+                  dolar = double.parse(snapshot.data["results"]["currencies"]
+                          ["USD"]["buy"]
+                      .toString());
+                  euro = double.parse(snapshot.data["results"]["currencies"]
+                          ["EUR"]["buy"]
+                      .toString());
+                  return App();
                 }
             }
           }),
     );
   }
 
-  Widget App(Double dolar) {
+  void _clearAll(){
+    realControl.text = "";
+    dolarControl.text = "";
+    euroControl.text = "";
+  }
+
+  void _changeEuro(String text) {
+    if(text.isEmpty) {
+      _clearAll();
+      return;
+    }
+    double _euro = double.parse(text)*euro;
+    realControl.text = _euro.toStringAsFixed(3);
+    dolarControl.text = (_euro/dolar).toStringAsFixed(3);
+  }
+
+  void _changeDolar(String text) {
+    if(text.isEmpty) {
+      _clearAll();
+      return;
+    }
+    double _dolar = double.parse(text)*dolar;
+    realControl.text = _dolar.toStringAsFixed(3);
+    euroControl.text = (_dolar/euro).toStringAsFixed(3);
+  }
+
+  void _changeReal(String text) {
+    if(text.isEmpty) {
+      _clearAll();
+      return;
+    }
+    double _real = double.parse(text);
+    dolarControl.text = (_real/dolar).toStringAsFixed(3);
+    euroControl.text = (_real/euro).toStringAsFixed(3);
+  }
+
+  Widget App() {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -75,20 +121,22 @@ class _HomeState extends State<Home> {
             size: 150,
           ),
           Divider(),
-          textArea("Real", "R\$"),
+          textArea("Real", "R\$", realControl, _changeReal),
           Divider(),
-          textArea("Dolar", "USD"),
+          textArea("Dolar", "USD", dolarControl, _changeDolar),
           Divider(),
-          textArea("Euro", "€"),
+          textArea("Euro", "€", euroControl, _changeEuro),
         ],
       ),
     );
   }
 
-  Widget textArea(String label, String prefix) {
+  Widget textArea(String label, String prefix, TextEditingController control,
+      Function changer) {
     return Padding(
       padding: EdgeInsets.fromLTRB(5, 5, 5, 5),
       child: TextField(
+        controller: control,
         keyboardType: TextInputType.numberWithOptions(),
         decoration: InputDecoration(
           enabledBorder:
@@ -102,6 +150,7 @@ class _HomeState extends State<Home> {
           labelStyle: TextStyle(fontSize: 20, color: Colors.yellow),
         ),
         style: TextStyle(color: Colors.yellow),
+        onChanged: changer,
       ),
     );
   }
